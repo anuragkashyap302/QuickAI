@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 import axios from "axios";
@@ -6,10 +6,11 @@ import {v2 as cloudinary} from 'cloudinary';
 import fs from 'fs';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 
-const AI = new OpenAI({
+const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
 });
+
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 
 export const generateArticle = async (req, res) => {
@@ -21,19 +22,20 @@ export const generateArticle = async (req, res) => {
         if(plan !== 'premium' && free_usage >= 10){
             return res.json({success: false, message: 'You have exhausted your free usage limit. Please upgrade to premium.'});
         }
-        const response = await AI.chat.completions.create({
-    model: "gemini-2.0-flash",
-    messages: [
-        
-        {
-            role: "user",
-            content: prompt,
-        },
-    ],
-    temperature: 0.7,
-    max_tokens: length,
-});
-   const content = response.choices[0].message.content;
+        const response = await ai.models.generateContent({
+            model: MODEL,
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: prompt }],
+                },
+            ],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: length,
+            },
+        });
+        const content = response.text;
      await sql` INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${prompt}, ${content}, 'article')`;
         if(plan !== 'premium'){
             await clerkClient.users.updateUser(userId, {
@@ -61,19 +63,20 @@ export const generateBlogTitle = async (req, res) => {
             return res.json({success: false, message: 'You have exhausted your free usage limit. Please upgrade to premium.'});
         }
 
-   const response = await AI.chat.completions.create({
-    model: "gemini-2.0-flash",
-    messages: [
-        
+   const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
         {
             role: "user",
-            content: prompt,
+            parts: [{ text: prompt }],
         },
     ],
-    temperature: 0.7,
-    max_tokens: 100,
+    generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 100,
+    },
 });
-   const content = response.choices[0].message.content;
+   const content = response.text;
      await sql` INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${prompt}, ${content}, 'blog-title')`;
         if(plan !== 'premium'){
             await clerkClient.users.updateUser(userId, {
@@ -210,19 +213,20 @@ export const resumeReview= async (req, res) => {
 
         const prompt = `Review this resume and provide constructive feedback on its strengths , weaknesses and areas for improvement.Resume Content:\n\n${pdfData.text}`;   
          
-  const response = await AI.chat.completions.create({
-    model: "gemini-2.0-flash",
-    messages: [
-        
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
         {
             role: "user",
-            content: prompt,
+            parts: [{ text: prompt }],
         },
     ],
-    temperature: 0.7,
-    max_tokens: 1000,
+    generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+    },
 });
-    const content = response.choices[0].message.content;
+    const content = response.text;
      await sql` INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, 'Review the uploaded resume', ${content}, 'resume-review')`;
         
         res.json({success: true, content});

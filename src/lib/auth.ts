@@ -33,8 +33,10 @@ export async function getOrCreateCurrentUser() {
   const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || "Sutra Creator";
   const avatar = clerkUser?.imageUrl || null;
 
-  // 3. Insert new user with 20 default credits
-  const [newUser] = await db
+  // 3. Upsert user (Insert or Update on conflict)
+  // Interview Tip: Next.js me RootLayout aur DashboardLayout parallel render hote hain.
+  // onConflictDoUpdate use karne se concurrent inserts par unique constraint error nahi aata!
+  const [user] = await db
     .insert(users)
     .values({
       id: userId,
@@ -44,9 +46,18 @@ export async function getOrCreateCurrentUser() {
       plan: "free",
       credits: 20,
     })
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        email: primaryEmail,
+        name: fullName,
+        imageUrl: avatar,
+        updatedAt: new Date(),
+      },
+    })
     .returning();
 
-  return newUser;
+  return user;
 }
 
 /**

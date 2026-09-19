@@ -6,26 +6,21 @@ import { db } from "@/db";
 import { creations } from "@/db/schema";
 import { deductUserCredits } from "@/lib/auth";
 
-// Request Body Validation Schema
+// Request Body Validation Schema with tone, targetAudience and keywords
 const generateArticleSchema = z.object({
   prompt: z.string().min(3, "Prompt must be at least 3 characters long"),
   title: z.string().optional().default("Untitled Article"),
   length: z.number().optional().default(800),
+  tone: z.string().optional().default("Professional"),
+  targetAudience: z.string().optional().default("General Public"),
+  keywords: z.string().optional().default(""),
   publish: z.boolean().optional().default(false),
 });
 
 /**
  * POST /api/ai/article
  * 
- * Next.js 15 Route Handler for Article Generation
- * 
- * Flow:
- * 1. Auth check via Clerk
- * 2. Payload validation via Zod
- * 3. Atomic credit deduction in Neon Postgres
- * 4. Gemini 2.5 Flash LLM Generation
- * 5. Save output to Drizzle creations table
- * 6. Return response
+ * Generates structured, high-ranking long-form markdown articles with tone and audience customization.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -48,7 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { prompt, title, length, publish } = parsed.data;
+    const { prompt, title, length, tone, targetAudience, keywords, publish } = parsed.data;
 
     // Credit Deduction (1 Credit per article)
     const creditResult = await deductUserCredits(userId, 1);
@@ -59,18 +54,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Build specialized prompt
+    const instructions = `You are a world-class content strategist and senior technical writer.
+Write a comprehensive, compelling, and beautifully structured markdown article.
+
+ARTICLE PARAMETERS:
+- Topic / Focus: "${prompt}"
+- Title: "${title || prompt}"
+- Tone of Voice: ${tone}
+- Target Audience: ${targetAudience}
+${keywords ? `- Target SEO Keywords to organically weave in: ${keywords}` : ""}
+- Desired Length: ~${length} tokens
+
+FORMATTING REQUIREMENTS:
+1. Start with an engaging H1 title and a strong executive hook.
+2. Use hierarchical headings (## and ###) with insightful sub-sections.
+3. Incorporate bullet points, numbered takeaways, and bold emphasis where impactful.
+4. Include a structured comparison or summary markdown table where relevant.
+5. Provide a strong, memorable conclusion with 2-3 actionable next steps.
+6. Output raw, clean GitHub-flavored Markdown only (no external commentary).`;
+
     // Google Gemini Generation
     const response = await ai.models.generateContent({
       model: DEFAULT_AI_MODEL,
       contents: [
         {
           role: "user",
-          parts: [{ text: `Write a comprehensive, well-structured markdown article on the topic: "${prompt}". Use engaging headings, bullet points, and actionable takeaways.` }],
+          parts: [{ text: instructions }],
         },
       ],
       config: {
         temperature: 0.7,
-        maxOutputTokens: length,
+        maxOutputTokens: length + 300,
       },
     });
 

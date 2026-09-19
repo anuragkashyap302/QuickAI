@@ -3,28 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { Sparkles, LayoutDashboard, PenTool, Image, FileText, Users, Zap } from "lucide-react";
+import { Sparkles, LayoutDashboard, SquarePen, Hash, Image as ImageIcon, Users, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * QuickAI Main Navigation Bar
- * 
- * Ye component top header render karta hai:
- * 1. Logo & Brand Name with glowing gradient
- * 2. Navigation Links (Dashboard, Article Studio, Image Studio, Community)
- * 3. Clerk Auth Buttons (Sign In for logged out, UserButton + Credits for logged in)
- * 
- * 'use client' kyun lagaya?
- * Kyunki hum usePathname hook aur client-side interactivity (mobile menu, Clerk buttons) use kar rahe hain.
- */
 export function Navbar({ credits = 20 }: { credits?: number }) {
   const pathname = usePathname();
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Article Studio", href: "/studio/article", icon: PenTool },
-    { name: "Image Studio", href: "/studio/image", icon: Image },
-    { name: "Document RAG", href: "/studio/rag", icon: FileText },
+    { name: "Articles", href: "/studio/article", icon: SquarePen },
+    { name: "Blog Titles", href: "/studio/blog-titles", icon: Hash },
+    { name: "AI Images", href: "/studio/image", icon: ImageIcon },
     { name: "Community", href: "/community", icon: Users },
   ];
 
@@ -38,7 +27,7 @@ export function Navbar({ credits = 20 }: { credits?: number }) {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-              Quick<span className="gradient-text">AI</span>
+              Sutra<span className="gradient-text">AI</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
                 v2.0
               </span>
@@ -50,15 +39,15 @@ export function Navbar({ credits = 20 }: { credits?: number }) {
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+            const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all",
                   isActive
-                    ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm"
+                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 shadow-sm"
                     : "text-muted-foreground hover:text-white hover:bg-secondary/60"
                 )}
               >
@@ -90,7 +79,7 @@ export function Navbar({ credits = 20 }: { credits?: number }) {
 
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer">
+              <button className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer">
                 Get Started Free
               </button>
             </SignInButton>

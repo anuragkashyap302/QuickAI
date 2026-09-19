@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { creations, users } from "@/db/schema";
+import { creations } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getOrCreateCurrentUser } from "@/lib/auth";
 import { 
-  PenTool, 
+  SquarePen, 
+  Hash, 
   Image as ImageIcon, 
+  Eraser, 
+  Scissors, 
   FileText, 
   Zap, 
   Sparkles, 
   Clock, 
-  Plus, 
   ArrowUpRight, 
   Flame, 
   FileCheck2,
@@ -21,13 +23,6 @@ import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-/**
- * QuickAI Dashboard Page (React Server Component)
- * 
- * Direct Server-Side Data Fetching:
- * Drizzle ORM queries direct server par run hoti hain, bina kisi extra Axios HTTP request ke!
- * Is se loading time 0ms hota hai aur sensitive queries client browser ko expose nahi hoti.
- */
 export default async function DashboardPage() {
   const { userId } = await auth();
 
@@ -44,35 +39,56 @@ export default async function DashboardPage() {
   const userCreations = await db.query.creations.findMany({
     where: eq(creations.userId, userId),
     orderBy: [desc(creations.createdAt)],
-    limit: 10,
+    limit: 15,
   });
 
-  const creationCards = [
+  const allTools = [
     {
-      title: "Write Article",
-      description: "Generate structured articles with split-pane live token streaming and TipTap editor.",
-      icon: PenTool,
+      title: "AI Article Writer",
+      description: "Generate structured long-form articles with Gemini 2.5 Flash.",
+      icon: SquarePen,
+      gradient: "from-[#3588F2] to-[#0BB0D7]",
       href: "/studio/article",
-      color: "from-blue-600 to-indigo-600",
     },
     {
-      title: "Image & Inpainting",
-      description: "Generate photorealistic art or paint over objects with generative brush canvas.",
+      title: "Blog Title Generator",
+      description: "Generate 10 catchy headline ideas for blogs & articles.",
+      icon: Hash,
+      gradient: "from-[#B153EA] to-[#E549A3]",
+      href: "/studio/blog-titles",
+    },
+    {
+      title: "AI Image Generation",
+      description: "Create photorealistic visuals & artwork with ClipDrop.",
       icon: ImageIcon,
+      gradient: "from-[#20C363] to-[#11B97E]",
       href: "/studio/image",
-      color: "from-purple-600 to-pink-600",
     },
     {
-      title: "Document RAG",
-      description: "Chat with PDFs using hybrid dense vector + BM25 search and clickable citations.",
+      title: "Background Removal",
+      description: "Isolate subjects and download clean transparent PNGs.",
+      icon: Eraser,
+      gradient: "from-[#F76C1C] to-[#F04A3C]",
+      href: "/studio/remove-background",
+    },
+    {
+      title: "Object Removal",
+      description: "Erase unwanted items with generative inpaint synthesis.",
+      icon: Scissors,
+      gradient: "from-[#5C6AF1] to-[#427DF5]",
+      href: "/studio/remove-object",
+    },
+    {
+      title: "Resume Reviewer",
+      description: "Upload PDF for ATS scores & line-by-line bullet fixes.",
       icon: FileText,
-      href: "/studio/rag",
-      color: "from-rose-600 to-orange-600",
+      gradient: "from-[#12B7AC] to-[#08B6CE]",
+      href: "/studio/review-resume",
     },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto py-4">
       {/* Top Banner / Welcome Area */}
       <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-indigo-500/20 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="relative z-10">
@@ -84,7 +100,7 @@ export default async function DashboardPage() {
             Welcome back, <span className="gradient-text">{user?.name || "Creator"}</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your AI studios, explore past creations, or start a new generation.
+            Choose an AI tool to generate, transform, or review your content.
           </p>
         </div>
 
@@ -105,39 +121,39 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Launch Studios Grid */}
+      {/* 6 Working AI Studios Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Flame className="w-5 h-5 text-indigo-400" />
-            Quick AI Studios
+            All 6 AI Studios (100% Functional)
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {creationCards.map((card) => {
-            const Icon = card.icon;
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {allTools.map((tool) => {
+            const Icon = tool.icon;
             return (
               <Link
-                key={card.title}
-                href={card.href}
-                className="glass-card rounded-2xl p-5 group flex flex-col justify-between hover:border-indigo-500/40"
+                key={tool.title}
+                href={tool.href}
+                className="glass-card rounded-2xl p-6 group flex flex-col justify-between hover:border-indigo-500/40 transition-all duration-300"
               >
                 <div>
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${card.color} flex items-center justify-center text-white mb-3 shadow-md`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${tool.gradient} flex items-center justify-center text-white mb-4 shadow-md group-hover:scale-105 transition-transform`}>
+                    <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center justify-between">
-                    {card.title}
+                  <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center justify-between text-base">
+                    {tool.title}
                     <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-indigo-400" />
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    {card.description}
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    {tool.description}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-border/40 text-[11px] font-semibold text-indigo-400 flex items-center gap-1">
-                  Launch Studio &rarr;
+                <div className="mt-4 pt-3 border-t border-border/40 text-xs font-semibold text-indigo-400 flex items-center gap-1">
+                  Launch Tool &rarr;
                 </div>
               </Link>
             );
@@ -175,7 +191,7 @@ export default async function DashboardPage() {
                 className="py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-secondary/30 px-3 rounded-lg transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
                     <FileCheck2 className="w-4 h-4" />
                   </div>
                   <div>
@@ -184,7 +200,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 self-end sm:self-auto">
+                <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
                   <span className="text-[11px] capitalize px-2 py-0.5 rounded bg-secondary text-slate-300 border border-border">
                     {item.type}
                   </span>

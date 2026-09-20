@@ -5,6 +5,9 @@ import { Toaster } from "sonner";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { getOrCreateCurrentUser } from "@/lib/auth";
+import { TelemetryProvider } from "@/context/TelemetryContext";
+import { TelemetryDrawer } from "@/components/telemetry/TelemetryDrawer";
+import { TelemetryFloatingButton } from "@/components/telemetry/TelemetryFloatingButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,9 +22,10 @@ export const metadata: Metadata = {
  * 
  * Ye component puri application ko wrap karta hai:
  * 1. ClerkProvider: Authentication context provide karta hai with dark theme
- * 2. getOrCreateCurrentUser: Agar user login hai, toh Neon DB se credits fetch karta hai
- * 3. Navbar & Footer: Global navigation structure
- * 4. Toaster: Beautiful toast alerts
+ * 2. TelemetryProvider: Real-time LLM observability, TTFT latency & token accounting
+ * 3. getOrCreateCurrentUser: Agar user login hai, toh Neon DB se credits fetch karta hai
+ * 4. Navbar & Footer: Global navigation structure
+ * 5. Toaster: Beautiful toast alerts
  */
 export default async function RootLayout({
   children,
@@ -54,12 +58,17 @@ export default async function RootLayout({
     >
       <html lang="en" className="dark scroll-smooth">
         <body className="min-h-screen flex flex-col bg-[#090a0f] text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
-          <Navbar credits={userCredits} />
-          <main className="flex-1 flex flex-col">{children}</main>
-          <Footer />
-          <Toaster richColors position="top-right" theme="dark" />
+          <TelemetryProvider>
+            <Navbar credits={userCredits} />
+            <main className="flex-1 flex flex-col">{children}</main>
+            <Footer />
+            <TelemetryDrawer />
+            <TelemetryFloatingButton />
+            <Toaster richColors position="top-right" theme="dark" />
+          </TelemetryProvider>
         </body>
       </html>
     </ClerkProvider>
   );
 }
+

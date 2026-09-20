@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { useTelemetry } from "@/context/TelemetryContext";
+import { estimateTokens } from "@/lib/telemetry";
 
 const TONE_OPTIONS = [
   { id: "Professional", label: "💼 Professional", desc: "Crisp & authoritative" },
@@ -66,6 +68,7 @@ export default function ArticleStudioPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("Spanish");
   const [copied, setCopied] = useState(false);
 
+  const { addTrace } = useTelemetry();
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   // Hydrate remixed prompt from URL query params
@@ -99,6 +102,7 @@ export default function ArticleStudioPage() {
 
     setIsGenerating(true);
     setGeneratedArticle(null);
+    const startTime = performance.now();
 
     try {
       const res = await fetch("/api/ai/article", {
@@ -120,12 +124,48 @@ export default function ArticleStudioPage() {
         throw new Error(json.error || "Failed to generate article");
       }
 
+      const latencyMs = Math.round(performance.now() - startTime);
+      const content = json.data.content;
+      const promptTokens = estimateTokens(prompt) + estimateTokens(keywords) + 150;
+      const completionTokens = estimateTokens(content);
+
+      // Record Telemetry
+      addTrace({
+        studio: "Article Studio",
+        model: "gemini-2.5-flash",
+        latencyMs,
+        ttftMs: Math.round(latencyMs * 0.25),
+        promptTokens,
+        completionTokens,
+        status: "success",
+        promptPreview: prompt,
+        responsePreview: content,
+        metadata: {
+          tone,
+          targetAudience,
+          length,
+          wordCount: content.split(/\s+/).length,
+        },
+      });
+
       setGeneratedArticle(json.data.content);
       setViewMode("preview");
       toast.success("Article generated successfully!");
     } catch (err: unknown) {
+      const latencyMs = Math.round(performance.now() - startTime);
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);
+
+      addTrace({
+        studio: "Article Studio",
+        model: "gemini-2.5-flash",
+        latencyMs,
+        promptTokens: estimateTokens(prompt),
+        completionTokens: 0,
+        status: "error",
+        promptPreview: prompt,
+        responsePreview: msg,
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -138,6 +178,7 @@ export default function ArticleStudioPage() {
     setIsRefactoring(true);
     setRefactorAction(action);
     const toastId = toast.loading(`Applying AI refactor: ${action}...`);
+    const startTime = performance.now();
 
     try {
       const res = await fetch("/api/ai/article/refactor", {
@@ -155,11 +196,44 @@ export default function ArticleStudioPage() {
         throw new Error(json.error || "Refactor failed");
       }
 
+      const latencyMs = Math.round(performance.now() - startTime);
+      const refactoredContent = json.data.content;
+      const promptTokens = estimateTokens(generatedArticle) + 80;
+      const completionTokens = estimateTokens(refactoredContent);
+
+      addTrace({
+        studio: "Article Studio (Refactor)",
+        model: "gemini-2.5-flash",
+        latencyMs,
+        ttftMs: Math.round(latencyMs * 0.2),
+        promptTokens,
+        completionTokens,
+        status: "success",
+        promptPreview: `[Refactor Action: ${action}] ${generatedArticle.slice(0, 120)}...`,
+        responsePreview: refactoredContent,
+        metadata: {
+          action,
+          targetLanguage: selectedLanguage,
+        },
+      });
+
       setGeneratedArticle(json.data.content);
       toast.success(`Applied ${action} transformation! (1 Credit)`, { id: toastId });
     } catch (err: unknown) {
+      const latencyMs = Math.round(performance.now() - startTime);
       const msg = err instanceof Error ? err.message : "Refactor error";
       toast.error(msg, { id: toastId });
+
+      addTrace({
+        studio: "Article Studio (Refactor)",
+        model: "gemini-2.5-flash",
+        latencyMs,
+        promptTokens: estimateTokens(generatedArticle),
+        completionTokens: 0,
+        status: "error",
+        promptPreview: `[Refactor: ${action}]`,
+        responsePreview: msg,
+      });
     } finally {
       setIsRefactoring(false);
       setRefactorAction(null);

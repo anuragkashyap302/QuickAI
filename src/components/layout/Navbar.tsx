@@ -13,6 +13,8 @@ import {
   Users,
   Zap,
   Plus,
+  FileSearch,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PricingModal } from "./PricingModal";
@@ -24,10 +26,11 @@ export function Navbar({ credits: initialCredits = 20 }: { credits?: number }) {
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Hybrid RAG", href: "/studio/rag", icon: FileSearch },
     { name: "Articles", href: "/studio/article", icon: SquarePen },
-    { name: "Blog Titles", href: "/studio/blog-titles", icon: Hash },
     { name: "AI Images", href: "/studio/image", icon: ImageIcon },
     { name: "Community", href: "/community", icon: Users },
+    { name: "Observability", href: "/observability", icon: Activity },
   ];
 
   return (

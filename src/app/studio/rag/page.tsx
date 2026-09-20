@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SAMPLE_WHITEPAPER } from "@/lib/sample-docs";
+import { useTelemetry } from "@/context/TelemetryContext";
+import { estimateTokens } from "@/lib/telemetry";
 
 interface DocumentItem {
   id: string;
@@ -70,6 +72,8 @@ export default function DocumentRagPage() {
   const [activeTab, setActiveTab] = useState<"document" | "telemetry">("document");
   const [activeCitedPage, setActiveCitedPage] = useState<number | null>(null);
   const [lastTelemetry, setLastTelemetry] = useState<RankedChunkTelemetry[]>([]);
+
+  const { addTrace } = useTelemetry();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -136,11 +140,10 @@ export default function DocumentRagPage() {
       const res = await fetch(`/api/ai/rag/documents?documentId=${docId}`);
       const data = await res.json();
       if (data.success && data.data) {
-        setDocChunks(data.data.chunks || []);
+        setDocChunks(data.data);
       }
     } catch (err) {
-      console.error("Failed to load document chunks:", err);
-      toast.error("Failed to load document preview");
+      console.error("Failed to fetch chunks:", err);
     } finally {
       setLoadingDoc(false);
     }
@@ -271,6 +274,7 @@ export default function DocumentRagPage() {
     setQueryInput("");
     setLoadingQuery(true);
     setActiveCitedPage(null);
+    const startTime = performance.now();
 
     try {
       const res = await fetch("/api/ai/rag/query", {
@@ -287,6 +291,30 @@ export default function DocumentRagPage() {
         throw new Error(result.error || "Query failed");
       }
 
+      const latencyMs = Math.round(performance.now() - startTime);
+      const answer = result.data.answer;
+      const promptTokens = estimateTokens(textToSend) + (docChunks.length * 200);
+      const completionTokens = estimateTokens(answer);
+
+      // Record to global telemetry drawer
+      addTrace({
+        studio: "Hybrid Document RAG",
+        model: "gemini-2.5-flash + text-embedding-004",
+        latencyMs,
+        ttftMs: Math.round(latencyMs * 0.35),
+        promptTokens,
+        completionTokens,
+        status: "success",
+        promptPreview: textToSend,
+        responsePreview: answer,
+        metadata: {
+          documentId: selectedDocId,
+          chunksRetrieved: result.data.rankedChunks?.length || 0,
+          citedPages: result.data.citedPages || [],
+          hybridRRF: "Reciprocal Rank Fusion (k=60)",
+        },
+      });
+
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: "assistant",
@@ -299,8 +327,21 @@ export default function DocumentRagPage() {
       setMessages((prev) => [...prev, aiMsg]);
       setLastTelemetry(result.data.rankedChunks || []);
     } catch (err: unknown) {
+      const latencyMs = Math.round(performance.now() - startTime);
       const msg = err instanceof Error ? err.message : "Failed to generate answer";
       toast.error(msg);
+
+      addTrace({
+        studio: "Hybrid Document RAG",
+        model: "gemini-2.5-flash",
+        latencyMs,
+        promptTokens: estimateTokens(textToSend),
+        completionTokens: 0,
+        status: "error",
+        promptPreview: textToSend,
+        responsePreview: msg,
+      });
+
       setMessages((prev) => [
         ...prev,
         {

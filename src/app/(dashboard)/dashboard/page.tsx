@@ -4,22 +4,20 @@ import { db } from "@/db";
 import { creations } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getOrCreateCurrentUser } from "@/lib/auth";
-import { 
-  SquarePen, 
-  Hash, 
-  Image as ImageIcon, 
-  Eraser, 
-  Scissors, 
-  FileText, 
-  Zap, 
-  Sparkles, 
-  Clock, 
-  ArrowUpRight, 
-  Flame, 
-  FileCheck2,
-  FolderOpen
+import {
+  SquarePen,
+  Hash,
+  Image as ImageIcon,
+  Eraser,
+  Scissors,
+  FileText,
+  Zap,
+  Sparkles,
+  Flame,
+  Cpu,
+  ArrowUpRight,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { CreationsLibrary } from "@/components/dashboard/CreationsLibrary";
 
 export const dynamic = "force-dynamic";
 
@@ -39,48 +37,58 @@ export default async function DashboardPage() {
   const userCreations = await db.query.creations.findMany({
     where: eq(creations.userId, userId),
     orderBy: [desc(creations.createdAt)],
-    limit: 15,
+    limit: 30,
   });
 
   const allTools = [
     {
-      title: "AI Article Writer",
-      description: "Generate structured long-form articles with Gemini 2.5 Flash.",
+      title: "🧠 Document RAG Engine",
+      description: "Flagship hybrid vector + BM25 search with interactive PDF citations.",
+      icon: Cpu,
+      gradient: "from-[#F43F5E] to-[#E11D48]",
+      href: "/studio/rag",
+      badge: "Flagship",
+    },
+    {
+      title: "✍️ AI Article Studio",
+      description: "Claude Artifacts-style split-pane editor with 1-click AI refactors.",
       icon: SquarePen,
       gradient: "from-[#3588F2] to-[#0BB0D7]",
       href: "/studio/article",
+      badge: "Artifacts",
     },
     {
-      title: "Blog Title Generator",
-      description: "Generate 10 catchy headline ideas for blogs & articles.",
+      title: "🎨 Inpainting Canvas",
+      description: "HTML5 brush tool for generative object removal and replacements.",
+      icon: Scissors,
+      gradient: "from-[#5C6AF1] to-[#427DF5]",
+      href: "/studio/remove-object",
+      badge: "Canvas",
+    },
+    {
+      title: "🏷️ Blog Title Generator",
+      description: "Generate 10 catchy headline ideas for blogs & social posts.",
       icon: Hash,
       gradient: "from-[#B153EA] to-[#E549A3]",
       href: "/studio/blog-titles",
     },
     {
-      title: "AI Image Generation",
-      description: "Create photorealistic visuals & artwork with ClipDrop.",
+      title: "🖼️ AI Image Generation",
+      description: "Create photorealistic visuals & artwork with Cloudinary CDN.",
       icon: ImageIcon,
       gradient: "from-[#20C363] to-[#11B97E]",
       href: "/studio/image",
     },
     {
-      title: "Background Removal",
+      title: "🧹 Background Removal",
       description: "Isolate subjects and download clean transparent PNGs.",
       icon: Eraser,
       gradient: "from-[#F76C1C] to-[#F04A3C]",
       href: "/studio/remove-background",
     },
     {
-      title: "Object Removal",
-      description: "Erase unwanted items with generative inpaint synthesis.",
-      icon: Scissors,
-      gradient: "from-[#5C6AF1] to-[#427DF5]",
-      href: "/studio/remove-object",
-    },
-    {
-      title: "Resume Reviewer",
-      description: "Upload PDF for ATS scores & line-by-line bullet fixes.",
+      title: "📄 Resume ATS Reviewer",
+      description: "PDF parsing with ATS scoring and line-by-line bullet fixes.",
       icon: FileText,
       gradient: "from-[#12B7AC] to-[#08B6CE]",
       href: "/studio/review-resume",
@@ -96,11 +104,11 @@ export default async function DashboardPage() {
             <Sparkles className="w-3.5 h-3.5" />
             Active Plan: <span className="capitalize font-bold text-white">{userPlan}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
             Welcome back, <span className="gradient-text">{user?.name || "Creator"}</span>
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Choose an AI tool to generate, transform, or review your content.
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            Choose an AI tool to generate, transform, or search your enterprise documents.
           </p>
         </div>
 
@@ -115,45 +123,55 @@ export default async function DashboardPage() {
             </span>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-white">{credits}</span>
-              <span className="text-xs text-muted-foreground">/ 20 Daily</span>
+              <span className="text-xs text-muted-foreground">Credits Balance</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 6 Working AI Studios Grid */}
+      {/* AI Studios Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Flame className="w-5 h-5 text-indigo-400" />
-            All 6 AI Studios (100% Functional)
+            Multimodal AI Creation Studios
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {allTools.map((tool) => {
             const Icon = tool.icon;
             return (
               <Link
                 key={tool.title}
                 href={tool.href}
-                className="glass-card rounded-2xl p-6 group flex flex-col justify-between hover:border-indigo-500/40 transition-all duration-300"
+                className="glass-card rounded-2xl p-5 group flex flex-col justify-between hover:border-indigo-500/40 transition-all duration-300"
               >
                 <div>
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${tool.gradient} flex items-center justify-center text-white mb-4 shadow-md group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-6 h-6" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${tool.gradient} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    {tool.badge && (
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-bold">
+                        {tool.badge}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center justify-between text-base">
+
+                  <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center justify-between text-sm">
                     {tool.title}
                     <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-indigo-400" />
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                     {tool.description}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-border/40 text-xs font-semibold text-indigo-400 flex items-center gap-1">
-                  Launch Tool &rarr;
+                <div className="mt-4 pt-2.5 border-t border-border/40 text-xs font-semibold text-indigo-400 flex items-center gap-1">
+                  Launch Studio &rarr;
                 </div>
               </Link>
             );
@@ -161,58 +179,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Creations History */}
-      <div className="glass-panel rounded-2xl p-6 border border-border/60">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-lg font-bold text-white">Your Creation History</h2>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {userCreations.length} items saved in Neon DB
-          </span>
-        </div>
-
-        {userCreations.length === 0 ? (
-          <div className="text-center py-12 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-muted-foreground mb-3">
-              <FolderOpen className="w-7 h-7" />
-            </div>
-            <h3 className="text-sm font-semibold text-white">No creations yet</h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Launch one of the AI studios above to generate your first article, image, or resume review!
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-border/40">
-            {userCreations.map((item) => (
-              <div
-                key={item.id}
-                className="py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-secondary/30 px-3 rounded-lg transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
-                    <FileCheck2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-white line-clamp-1">{item.title}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{item.prompt}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                  <span className="text-[11px] capitalize px-2 py-0.5 rounded bg-secondary text-slate-300 border border-border">
-                    {item.type}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(item.createdAt)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Interactive Filterable Creations Library */}
+      <CreationsLibrary initialCreations={userCreations} />
     </div>
   );
 }

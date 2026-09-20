@@ -8,7 +8,9 @@ import { deductUserCredits } from "@/lib/auth";
 /**
  * POST /api/ai/remove-object
  * 
- * Removes target object generatively via Cloudinary
+ * Performs Dual-Mode AI Inpainting:
+ * 1. Mode 'remove': Generative Object Eraser with background synthesis (`gen_remove:prompt_${object}`)
+ * 2. Mode 'replace': Generative Object Replacement (`gen_replace:from_${object};to_${replacementPrompt}`)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -20,13 +22,19 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("image") as File;
-    const object = formData.get("object") as string;
+    const object = (formData.get("object") as string) || "object";
+    const mode = (formData.get("mode") as string) || "remove";
+    const replacementPrompt = formData.get("replacementPrompt") as string;
 
-    if (!file || !object) {
-      return NextResponse.json({ success: false, error: "Image and target object name are required" }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ success: false, error: "Image file is required" }, { status: 400 });
     }
 
-    // Deduct 2 credits
+    if (mode === "replace" && !replacementPrompt) {
+      return NextResponse.json({ success: false, error: "Replacement prompt is required for replace mode" }, { status: 400 });
+    }
+
+    // Deduct 2 credits for inpainting
     const creditResult = await deductUserCredits(userId, 2);
     if (!creditResult.success) {
       return NextResponse.json({ success: false, error: creditResult.error }, { status: 403 });
@@ -36,11 +44,27 @@ export async function POST(req: NextRequest) {
     const base64Str = `data:${file.type};base64,${buffer.toString("base64")}`;
 
     const uploadRes = await cloudinary.uploader.upload(base64Str, {
-      folder: "sutra_object_removed",
+      folder: "sutra_inpainting_studio",
     });
 
+    let transformationEffect = "";
+    let actionTitle = "";
+    let actionPrompt = "";
+
+    if (mode === "replace") {
+      // Cloudinary Generative Replacement syntax: gen_replace:from_item;to_newItem
+      transformationEffect = `gen_replace:from_${encodeURIComponent(object)};to_${encodeURIComponent(replacementPrompt)}`;
+      actionTitle = `Replaced ${object} with ${replacementPrompt}`;
+      actionPrompt = `Replace ${object} with ${replacementPrompt}`;
+    } else {
+      // Cloudinary Generative Eraser syntax: gen_remove:prompt_item
+      transformationEffect = `gen_remove:prompt_${encodeURIComponent(object)}`;
+      actionTitle = `Erased ${object} from image`;
+      actionPrompt = `Remove object: ${object}`;
+    }
+
     const transformedUrl = cloudinary.url(uploadRes.public_id, {
-      transformation: [{ effect: `gen_remove:${object}` }],
+      transformation: [{ effect: transformationEffect }],
       resource_type: "image",
       secure: true,
     });
@@ -50,8 +74,8 @@ export async function POST(req: NextRequest) {
       .values({
         userId,
         type: "object-removal",
-        title: `Removed ${object} from ${file.name}`,
-        prompt: `Remove object: ${object}`,
+        title: actionTitle,
+        prompt: actionPrompt,
         content: transformedUrl,
         imageUrl: transformedUrl,
       })
@@ -62,12 +86,13 @@ export async function POST(req: NextRequest) {
       data: {
         id: newCreation.id,
         imageUrl: transformedUrl,
+        originalUrl: uploadRes.secure_url,
         remainingCredits: creditResult.remainingCredits,
       },
     });
   } catch (error: unknown) {
-    console.error("Object removal error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to remove object";
+    console.error("Inpainting API error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to inpaint image";
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

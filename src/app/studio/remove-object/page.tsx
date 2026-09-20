@@ -1,44 +1,275 @@
 "use client";
 
-import { useState } from "react";
-import { Scissors, Upload, Download, Loader2, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  Scissors,
+  Upload,
+  Download,
+  Loader2,
+  Sparkles,
+  Brush,
+  RotateCcw,
+  Trash2,
+  Eye,
+  EyeOff,
+  Wand2,
+  Layers,
+  ArrowRight,
+  CheckCircle2,
+  RefreshCw,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 
-export default function RemoveObjectPage() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [objectName, setObjectName] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [resultImage, setResultImage] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+interface StrokePoint {
+  x: number;
+  y: number;
+}
 
+interface Stroke {
+  points: StrokePoint[];
+  size: number;
+}
+
+const SAMPLE_IMAGES = [
+  {
+    name: "Urban Portrait (Remove Background Person)",
+    url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    defaultObject: "person in background",
+    replaceSuggestion: "green tree foliage",
+  },
+  {
+    name: "Workspace Desk (Replace Coffee Mug)",
+    url: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80",
+    defaultObject: "coffee mug",
+    replaceSuggestion: "vintage brass compass",
+  },
+];
+
+export default function RemoveObjectPage() {
+  const [mode, setMode] = useState<"remove" | "replace">("remove");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [objectName, setObjectName] = useState("");
+  const [replacementPrompt, setReplacementPrompt] = useState("");
+
+  // Canvas Drawing State
+  const [brushSize, setBrushSize] = useState<number>(24);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [currentStroke, setCurrentStroke] = useState<StrokePoint[]>([]);
+  const [showMask, setShowMask] = useState<boolean>(true);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+
+  // Result State
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+  const [viewTab, setViewTab] = useState<"result" | "compare">("result");
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageObjRef = useRef<HTMLImageElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Redraw canvas whenever strokes, brushSize, or imageSrc change
+  const redrawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background image
+    if (imageObjRef.current) {
+      ctx.drawImage(imageObjRef.current, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw strokes
+    if (showMask) {
+      const allStrokes = [...strokes, ...(currentStroke.length > 0 ? [{ points: currentStroke, size: brushSize }] : [])];
+
+      for (const stroke of allStrokes) {
+        if (stroke.points.length === 0) continue;
+
+        ctx.strokeStyle = "rgba(244, 63, 94, 0.65)"; // Semi-transparent rose mask
+        ctx.fillStyle = "rgba(244, 63, 94, 0.65)";
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = stroke.size;
+
+        ctx.beginPath();
+        if (stroke.points.length === 1) {
+          ctx.arc(stroke.points[0].x, stroke.points[0].y, stroke.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+          for (let i = 1; i < stroke.points.length; i++) {
+            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+          }
+          ctx.stroke();
+        }
+      }
+    }
+  }, [strokes, currentStroke, brushSize, showMask]);
+
+  useEffect(() => {
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  // Load Image onto Canvas
+  const loadImageToCanvas = (src: string) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      imageObjRef.current = img;
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const maxWidth = 550;
+        const scale = Math.min(1, maxWidth / img.naturalWidth);
+        canvas.width = img.naturalWidth * scale;
+        canvas.height = img.naturalHeight * scale;
+        setStrokes([]);
+        setCurrentStroke([]);
+        redrawCanvas();
+      }
+    };
+    img.src = src;
+    setImageSrc(src);
+    setResultImage(null);
+    setOriginalUrl(src);
+  };
+
+  // Handle local file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setResultImage(null);
+      const url = URL.createObjectURL(file);
+      loadImageToCanvas(url);
     }
   };
 
-  const handleRemoveObject = async (e: React.FormEvent) => {
+  // Load sample image
+  const handleLoadSample = async (sample: typeof SAMPLE_IMAGES[0]) => {
+    const toastId = toast.loading(`Loading ${sample.name}...`);
+    try {
+      const response = await fetch(sample.url);
+      const blob = await response.blob();
+      const file = new File([blob], "sample_inpainting.jpg", { type: "image/jpeg" });
+      setSelectedFile(file);
+      setObjectName(sample.defaultObject);
+      if (sample.replaceSuggestion) {
+        setReplacementPrompt(sample.replaceSuggestion);
+      }
+      loadImageToCanvas(sample.url);
+      toast.success("Sample image loaded onto canvas!", { id: toastId });
+    } catch {
+      toast.error("Failed to load sample image", { id: toastId });
+    }
+  };
+
+  // Canvas Mouse Coordinates Helper
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+
+    let clientX = 0;
+    let clientY = 0;
+
+    if ("touches" in e) {
+      if (e.touches.length === 0) return null;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
+  // Drawing Events
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!imageSrc) return;
+    const coords = getCanvasCoords(e);
+    if (!coords) return;
+
+    setIsDrawing(true);
+    setCurrentStroke([coords]);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const coords = getCanvasCoords(e);
+    if (!coords) return;
+
+    setCursorPos({ x: coords.x, y: coords.y });
+
+    if (!isDrawing) return;
+    setCurrentStroke((prev) => [...prev, coords]);
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing && currentStroke.length > 0) {
+      setStrokes((prev) => [...prev, { points: currentStroke, size: brushSize }]);
+      setCurrentStroke([]);
+    }
+    setIsDrawing(false);
+  };
+
+  // Undo last brush stroke
+  const handleUndo = () => {
+    setStrokes((prev) => prev.slice(0, -1));
+    toast.info("Undid last brush stroke");
+  };
+
+  // Clear all mask strokes
+  const handleClearMask = () => {
+    setStrokes([]);
+    setCurrentStroke([]);
+    toast.info("Mask cleared");
+  };
+
+  // Submit Inpainting Request
+  const handleInpaintSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      toast.error("Please upload an image first");
+      toast.error("Please upload or choose a sample image first");
       return;
     }
     if (!objectName.trim()) {
-      toast.error("Please specify the object you want to remove");
+      toast.error("Please describe the object painted under the mask");
+      return;
+    }
+    if (mode === "replace" && !replacementPrompt.trim()) {
+      toast.error("Please specify what to replace the object with");
       return;
     }
 
     setIsProcessing(true);
     setResultImage(null);
+    const toastId = toast.loading(
+      mode === "replace"
+        ? `Generatively replacing "${objectName}" with "${replacementPrompt}"...`
+        : `Erasing "${objectName}" and reconstructing background...`
+    );
 
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
       formData.append("object", objectName.trim());
+      formData.append("mode", mode);
+      if (mode === "replace") {
+        formData.append("replacementPrompt", replacementPrompt.trim());
+      }
 
       const res = await fetch("/api/ai/remove-object", {
         method: "POST",
@@ -46,127 +277,335 @@ export default function RemoveObjectPage() {
       });
 
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || "Failed to remove object");
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Inpainting failed");
+      }
 
       setResultImage(json.data.imageUrl);
-      toast.success(`Removed "${objectName}" seamlessly!`);
+      if (json.data.originalUrl) {
+        setOriginalUrl(json.data.originalUrl);
+      }
+      toast.success("Inpainting complete! (2 Credits)", { id: toastId });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Processing failed");
+      const msg = err instanceof Error ? err.message : "Processing failed";
+      toast.error(msg, { id: toastId });
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex items-center gap-3 pb-6 border-b border-border/40">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#5C6AF1] to-[#427DF5] flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
-          <Scissors className="w-6 h-6" />
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Studio Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/40">
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Generative Object Removal</h1>
-          <p className="text-sm text-muted-foreground">
-            Erase unwanted items, people, or imperfections from photos with generative background synthesis.
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/30 text-xs font-semibold mb-2">
+            <Brush className="w-3.5 h-3.5" />
+            Phase 3 • Interactive Canvas Inpainting Studio
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+            AI Canvas Inpainting & Generative Fill
+          </h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            Paint directly over unwanted objects to erase them or inpaint photorealistic generative replacements.
           </p>
+        </div>
+
+        {/* 1-Click Sample Image Loaders */}
+        <div className="flex flex-wrap items-center gap-2">
+          {SAMPLE_IMAGES.map((sample, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleLoadSample(sample)}
+              className="px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary text-slate-200 text-xs font-medium border border-border/50 flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-rose-400" />
+              Sample #{idx + 1}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5">
-          <form onSubmit={handleRemoveObject} className="glass-panel rounded-2xl p-6 border border-border/60 space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Upload Image <span className="text-blue-400">*</span>
-              </label>
+      {/* Main Dual-Pane Studio Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-h-[640px]">
+        {/* LEFT PANE: Brush Canvas & Inpainting Form (6 Cols) */}
+        <div className="lg:col-span-6 glass-panel rounded-3xl p-5 border border-border/40 space-y-4 flex flex-col">
+          {/* Mode Switcher */}
+          <div className="flex items-center justify-between pb-3 border-b border-border/40">
+            <div className="flex items-center gap-1.5 bg-secondary/60 p-1 rounded-xl border border-border/50">
+              <button
+                type="button"
+                onClick={() => setMode("remove")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  mode === "remove"
+                    ? "bg-rose-600 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                <Scissors className="w-3.5 h-3.5" />
+                Object Eraser
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("replace")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  mode === "replace"
+                    ? "bg-rose-600 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                Generative Replacement
+              </button>
+            </div>
+            <span className="text-[11px] text-muted-foreground font-mono">⚡ 2 Credits</span>
+          </div>
 
-              <div className="border-2 border-dashed border-border/80 hover:border-blue-500/60 rounded-2xl p-6 text-center transition-colors cursor-pointer relative bg-secondary/30">
+          {/* Interactive Brush Toolbar (When image is loaded) */}
+          {imageSrc && (
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-secondary/40 border border-border/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
+                  <Brush className="w-3.5 h-3.5 text-rose-400" />
+                  Brush: {brushSize}px
+                </span>
                 <input
-                  type="file"
-                  accept="image/*"
-                  required
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  type="range"
+                  min={8}
+                  max={60}
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(Number(e.target.value))}
+                  className="w-24 accent-rose-500 cursor-pointer"
                 />
-                {previewUrl ? (
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-32 h-32 rounded-xl overflow-hidden mb-2">
-                      <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                    </div>
-                    <p className="text-xs text-slate-300 font-medium">{selectedFile?.name}</p>
-                    <span className="text-[11px] text-blue-400 mt-1">Click to replace</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center py-6">
-                    <Upload className="w-8 h-8 text-blue-400 mb-2" />
-                    <p className="text-sm font-semibold text-white">Click or drag image here</p>
-                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
-                  </div>
-                )}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  disabled={strokes.length === 0}
+                  className="p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-white text-xs disabled:opacity-40 transition-colors"
+                  title="Undo Last Stroke"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearMask}
+                  disabled={strokes.length === 0}
+                  className="p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-white text-xs disabled:opacity-40 transition-colors"
+                  title="Clear Mask"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMask(!showMask)}
+                  className="p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-white text-xs transition-colors"
+                  title={showMask ? "Hide Mask" : "Show Mask"}
+                >
+                  {showMask ? <Eye className="w-3.5 h-3.5 text-rose-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
+          )}
 
+          {/* Canvas Painting Viewport / Upload Dropzone */}
+          <div className="relative w-full rounded-2xl overflow-hidden border border-border/60 bg-slate-950/60 min-h-[320px] flex items-center justify-center">
+            {imageSrc ? (
+              <div className="relative cursor-crosshair max-w-full overflow-hidden flex items-center justify-center p-2">
+                <canvas
+                  ref={canvasRef}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={() => {
+                    stopDrawing();
+                    setCursorPos(null);
+                  }}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="max-w-full rounded-xl shadow-lg touch-none"
+                />
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:bg-secondary/20 transition-colors w-full h-full"
+              >
+                <Upload className="w-10 h-10 text-rose-400 mb-3" />
+                <p className="text-sm font-semibold text-white">Click or drag image to open Canvas</p>
+                <p className="text-xs text-muted-foreground mt-1">PNG, JPG or WebP up to 10MB</p>
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+
+          {/* Form Directives */}
+          <form onSubmit={handleInpaintSubmit} className="space-y-3 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Object to Remove <span className="text-blue-400">*</span>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                Describe Painted Object to {mode === "remove" ? "Erase" : "Replace"}{" "}
+                <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. watch, trash can, person on left"
+                placeholder="e.g. coffee mug, person in red jacket, microphone"
                 value={objectName}
                 onChange={(e) => setObjectName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-secondary/60 border border-border text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-rose-500"
               />
             </div>
 
+            {mode === "replace" && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Generative Replacement Prompt <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. luxury gold Rolex watch, vintage Polaroid camera, red sports car"
+                  value={replacementPrompt}
+                  onChange={(e) => setReplacementPrompt(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-rose-500"
+                />
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={isProcessing || !selectedFile || !objectName.trim()}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#5C6AF1] to-[#427DF5] hover:opacity-95 disabled:opacity-50 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              disabled={isProcessing || !imageSrc || !objectName.trim()}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:opacity-95 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Synthesizing Inpaint...
+                  Synthesizing Inpainting...
+                </>
+              ) : mode === "replace" ? (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  Generative Replace Object (2 Credits)
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  Remove Object (2 Credits)
+                  <Scissors className="w-4 h-4" />
+                  Erase Masked Object (2 Credits)
                 </>
               )}
             </button>
           </form>
         </div>
 
-        <div className="lg:col-span-7">
-          <div className="glass-panel rounded-2xl p-6 border border-border/60 min-h-[400px] flex flex-col justify-center items-center">
+        {/* RIGHT PANE: Inpainted Results & Comparison Canvas (6 Cols) */}
+        <div className="lg:col-span-6 glass-panel rounded-3xl p-5 border border-border/40 flex flex-col h-[640px]">
+          <div className="flex items-center justify-between pb-3 border-b border-border/40">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-rose-400" />
+              <h2 className="text-sm font-bold text-white">Inpainted Output & Comparison</h2>
+            </div>
+
+            {resultImage && (
+              <div className="flex items-center gap-1.5 bg-secondary/60 p-1 rounded-xl border border-border/50">
+                <button
+                  onClick={() => setViewTab("result")}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all ${
+                    viewTab === "result"
+                      ? "bg-rose-600 text-white"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  Result
+                </button>
+                <button
+                  onClick={() => setViewTab("compare")}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all ${
+                    viewTab === "compare"
+                      ? "bg-rose-600 text-white"
+                      : "text-muted-foreground hover:text-white"
+                  }`}
+                >
+                  Before / After
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-4 flex flex-col items-center justify-center">
             {isProcessing ? (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-3" />
-                <p className="text-sm font-medium text-slate-200">Erasing & blending background texture...</p>
+              <div className="flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
+                <Loader2 className="w-10 h-10 animate-spin text-rose-400 mb-3" />
+                <p className="text-sm font-semibold text-white">Synthesizing Diffusion Inpaint...</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                  Reconstructing background texture and seamlessly blending lighting...
+                </p>
               </div>
             ) : resultImage ? (
-              <div className="space-y-4 w-full flex flex-col items-center">
-                <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden border border-border shadow-2xl">
-                  <Image src={resultImage} alt="Inpainted Output" fill className="object-cover" />
-                </div>
+              <div className="w-full space-y-4 flex flex-col items-center">
+                {viewTab === "result" ? (
+                  <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden border border-border shadow-2xl">
+                    <Image
+                      src={resultImage}
+                      alt="Inpainted Result"
+                      fill
+                      className="object-contain bg-slate-950"
+                    />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                    <div className="space-y-1 text-center">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground">Before</span>
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-border">
+                        {originalUrl && (
+                          <Image
+                            src={originalUrl}
+                            alt="Original"
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-center">
+                      <span className="text-[10px] uppercase font-bold text-rose-400">After Inpaint</span>
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-rose-500/50">
+                        <Image
+                          src={resultImage}
+                          alt="After Inpaint"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <a
                   href={resultImage}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-md"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-md shadow-rose-600/20"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Download Clean Image
+                  Download High-Res Inpaint
                 </a>
               </div>
             ) : (
-              <div className="text-center py-16 text-muted-foreground flex flex-col items-center">
+              <div className="text-center p-8 text-muted-foreground flex flex-col items-center">
                 <Scissors className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <h3 className="text-sm font-semibold text-white">Cleaned image will render here</h3>
-                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Upload an image and type the object name to inpaint.
+                <h3 className="text-sm font-semibold text-white">Clean Inpainted Result</h3>
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                  Upload an image on the left, draw an overlay mask over any object, and click{" "}
+                  <strong>Synthesize Inpaint</strong>.
                 </p>
               </div>
             )}

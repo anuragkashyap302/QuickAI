@@ -32,6 +32,7 @@ yarn-error.log*
 .idea/
 
 # Internal roadmaps & documentation (kept as requested)
+# isko ab git me nhi rakhna isko delete kar sakte
 QUICKAI_PRODUCT_ROADMAP.md
 STANDOUT_AI_ENGINEER_ROADMAP.md
 documentation/

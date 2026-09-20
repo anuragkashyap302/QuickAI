@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 
 // .env.local se environment variables load karna
 // Interview Tip: Drizzle Kit CLI ko DB URL dene ke liye dotenv zaroori hai
+// neon ka hai url 
 dotenv.config({ path: ".env.local" });
 
 if (!process.env.DATABASE_URL) {

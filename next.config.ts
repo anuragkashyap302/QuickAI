@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
  * Next.js 15 Configuration
  * - remotePatterns: Cloudinary aur Clerk ke images allow karne ke liye zaroori hai
  * - typedRoutes: Type-safe routing support
+ * - typescript ka types folder bana lena usme sab rakhna types ko
  */
 const nextConfig: NextConfig = {
   images: {

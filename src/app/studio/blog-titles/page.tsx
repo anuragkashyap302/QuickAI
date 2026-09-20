@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Hash, Sparkles, Copy, Check, Loader2, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -12,6 +12,18 @@ export default function BlogTitlesPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTitles, setGeneratedTitles] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Hydrate remixed prompt from URL query params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const remixPrompt = params.get("remixPrompt");
+      if (remixPrompt) {
+        setPrompt(remixPrompt);
+        toast.success("✨ Remixed topic loaded from Community!");
+      }
+    }
+  }, []);
 
   const categories = [
     "Technology",

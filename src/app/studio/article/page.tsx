@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   PenTool,
   Sparkles,
@@ -67,6 +67,20 @@ export default function ArticleStudioPage() {
   const [copied, setCopied] = useState(false);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
+
+  // Hydrate remixed prompt from URL query params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const remixPrompt = params.get("remixPrompt");
+      const remixTitle = params.get("title");
+      if (remixPrompt) {
+        setPrompt(remixPrompt);
+        if (remixTitle) setTitle(remixTitle);
+        toast.success("✨ Remixed prompt loaded from Community!");
+      }
+    }
+  }, []);
 
   // Statistics calculation
   const wordCount = generatedArticle

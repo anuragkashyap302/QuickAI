@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Image as ImageIcon, Sparkles, Download, Loader2, Wand2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -11,6 +11,18 @@ export default function ImageGenerationPage() {
   const [publish, setPublish] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  // Hydrate remixed prompt from URL query params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const remixPrompt = params.get("remixPrompt");
+      if (remixPrompt) {
+        setPrompt(remixPrompt);
+        toast.success("✨ Remixed prompt loaded from Community!");
+      }
+    }
+  }, []);
 
   const styles = [
     { name: "Realistic", label: "Photorealistic" },

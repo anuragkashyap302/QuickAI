@@ -47,24 +47,23 @@ export default async function RootLayout({
   return (
     <ClerkProvider
       appearance={{
-        baseTheme: dark,
         variables: {
-          colorPrimary: "#6366f1",
-          colorBackground: "#0d0f17",
-          colorInputBackground: "#171a26",
-          colorInputText: "#f3f4f6",
+          colorPrimary: "#4f46e5",
+          colorBackground: "#ffffff",
+          colorInputBackground: "#f8fafc",
+          colorInputText: "#0f172a",
         },
       }}
     >
-      <html lang="en" className="dark scroll-smooth">
-        <body className="min-h-screen flex flex-col bg-[#090a0f] text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+      <html lang="en" className="scroll-smooth">
+        <body className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-800">
           <TelemetryProvider>
             <Navbar credits={userCredits} />
             <main className="flex-1 flex flex-col">{children}</main>
             <Footer />
             <TelemetryDrawer />
             <TelemetryFloatingButton />
-            <Toaster richColors position="top-right" theme="dark" />
+            <Toaster richColors position="top-right" theme="light" />
           </TelemetryProvider>
         </body>
       </html>

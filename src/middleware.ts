@@ -9,14 +9,18 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
  */
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/studio(.*)",
   "/community(.*)",
+  "/dashboard(.*)",
+  "/observability(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
+  "/api/ai/rag/documents", // Allow reading documents/samples in preview
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Agar request public route par nahi hai, toh authentication enforce karo
+  // Enforce auth only on private API mutations or sensitive endpoints
   if (!isPublicRoute(req)) {
     await auth.protect();
   }

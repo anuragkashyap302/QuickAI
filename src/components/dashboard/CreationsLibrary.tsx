@@ -33,13 +33,13 @@ export interface CreationItem {
 }
 
 const TYPE_CONFIG: { [key: string]: { label: string; icon: typeof FileText; color: string } } = {
-  article: { label: "Article", icon: SquarePen, color: "text-blue-400 bg-blue-500/10 border-blue-500/30" },
-  "blog-title": { label: "Blog Titles", icon: Hash, color: "text-purple-400 bg-purple-500/10 border-purple-500/30" },
-  image: { label: "AI Image", icon: ImageIcon, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30" },
-  "remove-background": { label: "BG Removal", icon: Eraser, color: "text-orange-400 bg-orange-500/10 border-orange-500/30" },
-  "object-removal": { label: "Inpaint Object", icon: Scissors, color: "text-rose-400 bg-rose-500/10 border-rose-500/30" },
-  "resume-review": { label: "Resume ATS", icon: FileCheck2, color: "text-teal-400 bg-teal-500/10 border-teal-500/30" },
-  "document-rag": { label: "Hybrid RAG Doc", icon: Cpu, color: "text-pink-400 bg-pink-500/10 border-pink-500/30" },
+  article: { label: "Article", icon: SquarePen, color: "text-blue-700 bg-blue-50 border-blue-200" },
+  "blog-title": { label: "Blog Titles", icon: Hash, color: "text-purple-700 bg-purple-50 border-purple-200" },
+  image: { label: "AI Image", icon: ImageIcon, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  "remove-background": { label: "BG Removal", icon: Eraser, color: "text-orange-700 bg-orange-50 border-orange-200" },
+  "object-removal": { label: "Inpaint Object", icon: Scissors, color: "text-rose-700 bg-rose-50 border-rose-200" },
+  "resume-review": { label: "Resume ATS", icon: FileCheck2, color: "text-teal-700 bg-teal-50 border-teal-200" },
+  "document-rag": { label: "Hybrid RAG Doc", icon: Cpu, color: "text-pink-700 bg-pink-50 border-pink-200" },
 };
 
 export function CreationsLibrary({ initialCreations = [] }: { initialCreations: CreationItem[] }) {
@@ -94,16 +94,16 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
   ];
 
   return (
-    <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-border/60 space-y-6">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6">
       {/* Top Header & Search Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/40">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-xs">
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Your Creation Library</h2>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-lg font-bold text-slate-900">Your Creation Library</h2>
+            <p className="text-xs text-slate-500 font-medium">
               {creationsList.length} items persisted in Neon PostgreSQL
             </p>
           </div>
@@ -111,13 +111,13 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
 
         {/* Live Search Input */}
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search creations or prompts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-secondary/60 border border-border/60 text-white text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium"
           />
         </div>
       </div>
@@ -130,14 +130,14 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
             onClick={() => setActiveFilter(cat.id)}
             className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeFilter === cat.id
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                : "bg-secondary/40 text-muted-foreground hover:text-white hover:bg-secondary/80 border border-border/40"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200"
             }`}
           >
             <span>{cat.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeFilter === cat.id ? "bg-white/20 text-white" : "bg-secondary text-slate-400"
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                activeFilter === cat.id ? "bg-white/25 text-white" : "bg-slate-200/70 text-slate-600"
               }`}
             >
               {cat.count}
@@ -149,39 +149,39 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
       {/* Creations List Table / Stream */}
       {filteredCreations.length === 0 ? (
         <div className="text-center py-16 flex flex-col items-center">
-          <div className="w-14 h-14 rounded-2xl bg-secondary/60 flex items-center justify-center text-muted-foreground mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mb-3 shadow-xs">
             <FolderOpen className="w-7 h-7" />
           </div>
-          <h3 className="text-sm font-semibold text-white">No creations match your query</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+          <h3 className="text-sm font-bold text-slate-900">No creations match your query</h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm font-medium">
             {searchQuery ? "Try a different search keyword or filter." : "Launch one of the AI studios to create your first asset!"}
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-border/40">
+        <div className="divide-y divide-slate-100">
           {filteredCreations.map((item) => {
             const config = TYPE_CONFIG[item.type] || {
               label: item.type,
               icon: FileText,
-              color: "text-slate-400 bg-secondary border-border/40",
+              color: "text-slate-700 bg-slate-100 border-slate-200",
             };
             const Icon = config.icon;
 
             return (
               <div
                 key={item.id}
-                className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-secondary/20 px-3 rounded-2xl transition-colors group"
+                className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/80 px-3 rounded-2xl transition-colors group"
               >
                 {/* Left side details */}
                 <div className="flex items-start gap-3.5 min-w-0 flex-1">
                   <div
-                    className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${config.color}`}
+                    className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${config.color}`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-white truncate">
+                      <h4 className="text-sm font-bold text-slate-900 truncate">
                         {item.title || "Untitled Creation"}
                       </h4>
                       <span
@@ -190,7 +190,7 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
                         {config.label}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                    <p className="text-xs text-slate-500 font-medium line-clamp-1 mt-0.5">
                       {item.prompt}
                     </p>
                   </div>
@@ -198,18 +198,18 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
 
                 {/* Right side actions */}
                 <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                  <span className="text-xs text-muted-foreground font-mono">
+                  <span className="text-xs text-slate-400 font-medium font-mono">
                     {formatDate(new Date(item.createdAt))}
                   </span>
 
-                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleCopyContent(item)}
-                      className="p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-white transition-colors cursor-pointer"
+                      className="p-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer shadow-xs"
                       title="Copy content"
                     >
                       {copiedId === item.id ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -217,7 +217,7 @@ export function CreationsLibrary({ initialCreations = [] }: { initialCreations: 
 
                     <button
                       onClick={() => handleDeleteCreation(item.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                       title="Delete creation"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

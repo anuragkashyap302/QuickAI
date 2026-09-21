@@ -98,32 +98,32 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto py-4">
       {/* Top Banner / Welcome Area */}
-      <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-indigo-500/20 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-xs font-semibold mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            Active Plan: <span className="capitalize font-bold text-white">{userPlan}</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold mb-3 shadow-xs">
+            <Zap className="w-3.5 h-3.5 text-indigo-600" />
+            Active Plan: <span className="capitalize font-bold text-indigo-900">{userPlan}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Welcome back, <span className="gradient-text">{user?.name || "Creator"}</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Welcome back, <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{user?.name || "Creator"}</span>
           </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+          <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium">
             Choose an AI tool to generate, transform, or search your enterprise documents.
           </p>
         </div>
 
         {/* Credit Quota Widget */}
-        <div className="glass-card rounded-2xl p-4 border border-indigo-500/30 flex items-center gap-4 relative z-10 w-full md:w-auto">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-4 relative z-10 w-full md:w-auto">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/20">
             <Zap className="w-6 h-6 text-white fill-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">
+            <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">
               Available Credits
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-white">{credits}</span>
-              <span className="text-xs text-muted-foreground">Credits Balance</span>
+              <span className="text-2xl font-black text-slate-900">{credits}</span>
+              <span className="text-xs text-slate-500 font-medium">Credits Balance</span>
             </div>
           </div>
         </div>
@@ -132,8 +132,8 @@ export default async function DashboardPage() {
       {/* AI Studios Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Flame className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <Flame className="w-5 h-5 text-indigo-600" />
             Multimodal AI Creation Studios
           </h2>
         </div>
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
               <Link
                 key={tool.title}
                 href={tool.href}
-                className="glass-card rounded-2xl p-5 group flex flex-col justify-between hover:border-indigo-500/40 transition-all duration-300"
+                className="bg-white rounded-2xl p-5 group flex flex-col justify-between border border-slate-200/80 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-300 cursor-pointer"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -155,22 +155,22 @@ export default async function DashboardPage() {
                       <Icon className="w-5 h-5" />
                     </div>
                     {tool.badge && (
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-mono font-bold shadow-xs">
                         {tool.badge}
                       </span>
                     )}
                   </div>
 
-                  <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center justify-between text-sm">
+                  <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center justify-between text-sm">
                     {tool.title}
-                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-indigo-400" />
+                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-indigo-600" />
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed font-medium">
                     {tool.description}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-2.5 border-t border-border/40 text-xs font-semibold text-indigo-400 flex items-center gap-1">
+                <div className="mt-4 pt-2.5 border-t border-slate-100 text-xs font-bold text-indigo-600 flex items-center gap-1">
                   Launch Studio &rarr;
                 </div>
               </Link>

@@ -117,45 +117,45 @@ export function PricingModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl glass-panel rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-5xl bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Glow Effects */}
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-indigo-100 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-pink-100 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-white transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="text-center max-w-2xl mx-auto mb-8 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-            Credit Balance: <span className="text-white font-bold">{currentCredits} Credits</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
+            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            Credit Balance: <span className="font-extrabold">{currentCredits} Credits</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
             Upgrade Your Creation Power
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-slate-600">
             Get higher credit quotas, unlock the Flagship Hybrid RAG engine, and create without limits.
           </p>
         </div>
 
         {/* 1-Click Instant Test Top-Up Bar */}
-        <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-pink-950/60 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
-              <Flame className="w-5 h-5 fill-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Flame className="w-5 h-5 fill-amber-500 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-900">
                 Developer Test Mode: Instant Credit Refill
               </h4>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-slate-600">
                 Simulate a credit purchase by adding +20 credits directly to your Neon PostgreSQL balance.
               </p>
             </div>
@@ -164,7 +164,7 @@ export function PricingModal({
           <button
             onClick={handleTopUp}
             disabled={loadingTopUp}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-extrabold text-xs shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer disabled:opacity-50"
           >
             {loadingTopUp ? (
               <>
@@ -187,44 +187,44 @@ export function PricingModal({
               key={plan.name}
               className={`rounded-3xl p-6 flex flex-col justify-between transition-all relative ${
                 plan.highlighted
-                  ? "glass-panel border-2 border-indigo-500/80 shadow-2xl shadow-indigo-500/20 bg-indigo-950/20 scale-[1.02]"
-                  : "glass-card border border-border/50"
+                  ? "bg-white border-2 border-indigo-600 shadow-xl shadow-indigo-500/10 scale-[1.02]"
+                  : "bg-slate-50/70 border border-slate-200"
               }`}
             >
               {plan.highlighted && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-md">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-md">
                   {plan.badge}
                 </div>
               )}
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-white text-lg">{plan.name}</h3>
+                  <h3 className="font-bold text-slate-900 text-lg">{plan.name}</h3>
                   {!plan.highlighted && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border/40">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-600 border border-slate-200">
                       {plan.badge}
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-muted-foreground min-h-[32px] mb-4">
+                <p className="text-xs text-slate-500 min-h-[32px] mb-4">
                   {plan.description}
                 </p>
 
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-3xl sm:text-4xl font-black text-white">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">/{plan.period}</span>
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900">{plan.price}</span>
+                  <span className="text-xs text-slate-500">/{plan.period}</span>
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-6">
-                  <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-xs font-bold mb-6">
+                  <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                   {plan.credits}
                 </div>
 
-                <div className="space-y-2.5 pb-6 border-t border-border/40 pt-4">
+                <div className="space-y-2.5 pb-6 border-t border-slate-200 pt-4">
                   {plan.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                       <span>{feat}</span>
                     </div>
                   ))}
@@ -240,10 +240,10 @@ export function PricingModal({
                 disabled={plan.disabled || loadingTopUp}
                 className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   plan.highlighted
-                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white shadow-lg shadow-indigo-600/25"
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
                     : plan.disabled
-                    ? "bg-secondary text-muted-foreground cursor-not-allowed opacity-60"
-                    : "bg-secondary hover:bg-secondary/80 text-white border border-border/60"
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-300"
                 }`}
               >
                 {plan.buttonText}

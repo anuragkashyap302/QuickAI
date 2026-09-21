@@ -7,6 +7,9 @@ import type { NextConfig } from "next";
  * - typescript ka types folder bana lena usme sab rakhna types ko
  */
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   images: {
     remotePatterns: [
       {

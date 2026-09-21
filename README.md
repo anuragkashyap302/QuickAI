@@ -160,17 +160,6 @@ Route (app)                                 Size  First Load JS
 
 ---
 
-## 🎙️ Senior Full-Stack + AI Engineer Interview Defense
-
-| Question | Senior AI Engineer Answer |
-|---|---|
-| **"Why migrate to Next.js 15 App Router over separate React and Express backends?"** | *"Next.js 15 unifies our full-stack boundary with React Server Components and Server Actions. It allows direct Drizzle queries without REST overhead, achieves sub-50ms token streaming, and deploys as a single serverless unit on Vercel with 0 CORS configuration."* |
-| **"Why is Hybrid Search (Vector + BM25) necessary in Document RAG?"** | *"Dense embeddings alone fail on exact part numbers, model codes, and acronyms (`SOC2`, `X-409A-V2`). Combining dense cosine similarity with BM25 English dictionary stemming via Reciprocal Rank Fusion delivers 100% precision on keyword queries while retaining deep semantic reasoning."* |
-| **"How do you prevent credit race conditions and double-spending?"** | *"Instead of client-side read-modify-write patterns, we execute atomic PostgreSQL conditional updates: `UPDATE users SET credits = credits - cost WHERE id = userId AND credits >= cost RETURNING credits`. This guarantees zero double-spending even with 100 concurrent requests."* |
-| **"Why store social likes in a PostgreSQL `text[]` array?"** | *"For read-heavy feeds with under 10,000 likes per post, storing user IDs in a PostgreSQL array avoids expensive SQL `JOIN` operations on feed queries, delivers single-row atomicity, and eliminates foreign key lock contention."* |
-
----
-
 ## 🚀 Getting Started
 
 ### 1. Clone & Install Dependencies

@@ -54,97 +54,116 @@ export default function ReviewResumePage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex items-center gap-3 pb-6 border-b border-border/40">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#12B7AC] to-[#08B6CE] flex items-center justify-center shadow-lg shadow-teal-500/20 text-white">
-          <FileText className="w-6 h-6" />
+    <div className="min-h-screen bg-gradient-to-br from-teal-50/70 via-white to-cyan-50/50 p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Studio Header */}
+        <div className="flex items-center gap-3.5 pb-6 border-b border-teal-100">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white">
+            <FileText className="w-7 h-7" />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/80 text-teal-700 border border-teal-200 text-xs font-bold mb-1 shadow-xs">
+              <Award className="w-3 h-3 text-teal-600" />
+              ATS Optimization Studio
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-700 via-cyan-600 to-sky-600 bg-clip-text text-transparent">
+              AI Resume Reviewer & ATS Optimizer
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600 mt-0.5 font-medium">
+              Get actionable feedback from a Silicon Valley recruiter AI: ATS score, strengths, and bullet-point fixes.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">AI Resume Reviewer & ATS Optimizer</h1>
-          <p className="text-sm text-muted-foreground">
-            Get actionable feedback from a Silicon Valley recruiter AI: ATS score, strengths, and bullet-point fixes.
-          </p>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5">
-          <form onSubmit={handleReviewResume} className="glass-panel rounded-2xl p-6 border border-border/60 space-y-4">
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Upload Resume (PDF only) <span className="text-teal-400">*</span>
-            </label>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Form */}
+          <div className="lg:col-span-5">
+            <form onSubmit={handleReviewResume} className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-7 border border-teal-100 shadow-xl space-y-5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Upload Resume (PDF only) <span className="text-teal-600">*</span>
+              </label>
 
-            <div className="border-2 border-dashed border-border/80 hover:border-teal-500/60 rounded-2xl p-6 text-center transition-colors cursor-pointer relative bg-secondary/30">
-              <input
-                type="file"
-                accept="application/pdf"
-                required
-                onChange={handleFileChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              {selectedFile ? (
-                <div className="flex flex-col items-center py-4">
-                  <div className="w-14 h-14 rounded-2xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 mb-2">
-                    <FileText className="w-7 h-7" />
+              <div className="border-2 border-dashed border-teal-200 hover:border-teal-400 rounded-3xl p-6 text-center transition-colors cursor-pointer relative bg-teal-50/30 hover:bg-teal-50/60 shadow-xs">
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  required
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                {selectedFile ? (
+                  <div className="flex flex-col items-center py-4">
+                    <div className="w-16 h-16 rounded-full bg-teal-100 border-2 border-teal-200 flex items-center justify-center text-teal-700 mb-2 shadow-sm">
+                      <FileText className="w-8 h-8" />
+                    </div>
+                    <p className="text-sm text-slate-900 font-bold line-clamp-1">{selectedFile.name}</p>
+                    <span className="text-xs text-slate-500 font-semibold mt-0.5">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                    <span className="text-[11px] text-teal-700 font-bold mt-2 px-3 py-1 rounded-full bg-white border border-teal-200 shadow-xs">
+                      Click to choose another PDF
+                    </span>
                   </div>
-                  <p className="text-sm text-white font-medium line-clamp-1">{selectedFile.name}</p>
-                  <span className="text-xs text-muted-foreground mt-0.5">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                  <span className="text-[11px] text-teal-400 mt-2">Click to choose another PDF</span>
+                ) : (
+                  <div className="flex flex-col items-center py-8">
+                    <div className="w-14 h-14 rounded-full bg-teal-100 border-2 border-teal-200 flex items-center justify-center text-teal-600 mb-3 shadow-xs">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-900">Click or drag PDF resume here</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">PDF documents up to 5MB</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProcessing || !selectedFile}
+                className="w-full py-4 rounded-full bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 hover:from-teal-500 hover:to-cyan-500 disabled:opacity-50 text-white text-sm font-bold shadow-lg shadow-teal-600/25 hover:shadow-xl hover:scale-[1.01] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Analyzing Resume with ATS Engine...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    Review Resume (2 Credits)
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Right Output */}
+          <div className="lg:col-span-7">
+            <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-teal-100 shadow-xl min-h-[450px] flex flex-col justify-center">
+              {isProcessing ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+                  <Loader2 className="w-10 h-10 animate-spin text-teal-600 mb-3" />
+                  <p className="text-sm font-bold text-slate-900">Evaluating ATS score & recruiter checklist...</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Parsing sections and quantifiable metrics</p>
+                </div>
+              ) : reviewResult ? (
+                <div className="prose max-w-none text-slate-800 prose-headings:text-slate-900 prose-headings:font-extrabold prose-p:text-slate-700 prose-li:text-slate-700 prose-strong:text-teal-700 prose-code:bg-teal-50 prose-code:text-teal-900 prose-code:px-2 prose-code:py-0.5 prose-code:rounded-md">
+                  <ReactMarkdown>{reviewResult}</ReactMarkdown>
                 </div>
               ) : (
-                <div className="flex flex-col items-center py-8">
-                  <Upload className="w-8 h-8 text-teal-400 mb-2" />
-                  <p className="text-sm font-semibold text-white">Click or drag PDF resume here</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDF up to 5MB</p>
+                <div className="text-center py-16 text-slate-400 flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center text-teal-400 mb-3 border-2 border-teal-100 shadow-xs">
+                    <Award className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-800">Comprehensive feedback will appear here</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xs font-medium">
+                    Upload your PDF resume on the left to get ATS scores and line-by-line improvements.
+                  </p>
                 </div>
               )}
             </div>
-
-            <button
-              type="submit"
-              disabled={isProcessing || !selectedFile}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#12B7AC] to-[#08B6CE] hover:opacity-95 disabled:opacity-50 text-white text-sm font-semibold shadow-lg shadow-teal-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing Resume with ATS Engine...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Review Resume (2 Credits)
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        <div className="lg:col-span-7">
-          <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-border/60 min-h-[450px] flex flex-col justify-center">
-            {isProcessing ? (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Loader2 className="w-10 h-10 animate-spin text-teal-400 mb-3" />
-                <p className="text-sm font-medium text-slate-200">Evaluating ATS score & recruiter checklist...</p>
-              </div>
-            ) : reviewResult ? (
-              <div className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-li:text-slate-300 prose-strong:text-teal-300">
-                <ReactMarkdown>{reviewResult}</ReactMarkdown>
-              </div>
-            ) : (
-              <div className="text-center py-16 text-muted-foreground flex flex-col items-center">
-                <Award className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <h3 className="text-sm font-semibold text-white">Comprehensive feedback will appear here</h3>
-                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Upload your PDF resume on the left to get ATS scores and line-by-line improvements.
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+

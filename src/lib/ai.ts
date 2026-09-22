@@ -12,4 +12,4 @@ export const ai = new GoogleGenAI({
   apiKey,
 });
 
-export const DEFAULT_AI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const DEFAULT_AI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";

@@ -52,7 +52,13 @@ export function CommunityFeed({
   currentUserId?: string | null;
 }) {
   const router = useRouter();
-  const [creations, setCreations] = useState<PublicCreation[]>(initialCreations);
+  const [creations, setCreations] = useState<PublicCreation[]>(() =>
+    initialCreations.map((item) => ({
+      ...item,
+      imageUrl: item.imageUrl || (item.content?.startsWith("http") ? item.content : null),
+      likesCount: Math.max(item.likesCount || 0, item.likes?.length || 0),
+    }))
+  );
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [likedPosts, setLikedPosts] = useState<{ [key: number]: boolean }>(() => {
@@ -231,7 +237,8 @@ export function CommunityFeed({
               color: "text-slate-700 bg-slate-100 border-slate-200",
             };
             const isLiked = likedPosts[item.id] || false;
-            const hasImage = Boolean(item.imageUrl);
+            const effectiveImage = item.imageUrl || (item.content?.startsWith("http") ? item.content : null);
+            const hasImage = Boolean(effectiveImage);
 
             return (
               <div
@@ -252,10 +259,10 @@ export function CommunityFeed({
                   </div>
 
                   {/* Image Preview if available */}
-                  {hasImage && item.imageUrl && (
+                  {hasImage && effectiveImage && (
                     <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-3.5 border border-slate-200 bg-slate-50 shadow-xs">
                       <Image
-                        src={item.imageUrl}
+                        src={effectiveImage}
                         alt={item.title || "Community Creation"}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
